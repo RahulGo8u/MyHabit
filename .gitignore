@@ -57,6 +57,8 @@ fastlane/test_output
 # TypeScript
 *.tsbuildinfo
 
+.vscode/
+
 # Expo
 .expo/
 .expo-shared/

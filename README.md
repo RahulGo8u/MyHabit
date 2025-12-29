@@ -1,32 +1,118 @@
 # MyHabit
 
-A React Native (TypeScript) daily habit tracker with time logging capabilities, built with Expo for easy testing with Expo Go.
+A React Native (TypeScript) daily habit tracker with time logging and priority management, built with Expo for easy testing with Expo Go.
 
-## Overview
-
-MyHabit is a simple, clean habit tracking app where:
-- Habits are created once and automatically repeat every day
-- Each day is a fresh checklist (completion resets daily)
-- Users can log time spent when completing a habit
-- Past days are read-only (history cannot be edited or deleted)
-
-## Features
+## 📱 Product Features
 
 ### Core Functionality
-- **Today Screen**: View and manage today's habits with status (Pending/Done)
-- **Add Habit**: Create new habits that automatically repeat daily
-- **Time Logging**: Log duration in minutes when marking habits as done
+- **Daily Habit Tracking**: Create habits that automatically repeat every day
+- **Today's Checklist**: View and manage all habits for the current day
+- **Status Management**: Mark habits as Pending or Done
+- **Time Logging**: Record completion time and duration (hours/minutes) when completing habits
+- **Planned Time**: Set and edit planned time for each habit (e.g., "Gym at 6:00 AM")
+- **Critical Priority**: Mark habits as critical - they appear at the top until completed
 - **History View**: Browse past days and view read-only habit records
-- **Habit Deletion**: Delete habits from today (affects future days only, preserves history)
+- **Smart Sorting**: 
+  - Critical pending habits appear first
+  - Non-critical pending habits sorted by planned time
+  - Completed habits moved to bottom, sorted by planned time
 
-### Key Behaviors
-- Habits repeat daily automatically
-- Each day starts with all habits in "Pending" status
-- Marking a habit as "Done" allows optional time logging
-- Deleting a habit removes it from today and all future days
-- Past history remains immutable and visible
+### User Experience
+- **Visual Indicators**: Critical habits show red badge (!), red border, and red text
+- **Confirmation Dialogs**: Confirmation alerts for important actions (delete, mark pending)
+- **Read-Only History**: Past days cannot be edited, preserving data integrity
+- **Soft Deletion**: Deleting a habit removes it from today and future days, but preserves history
 
-## Getting Started
+## 🛠 Technical Features
+
+### Architecture
+- **React Native with TypeScript**: Type-safe development
+- **Expo Managed Workflow**: No native code compilation required
+- **Expo Go Compatible**: Test directly on device without building
+- **Platform-Aware Storage**: SQLite on native, localStorage on web
+
+### Navigation
+- **Stack Navigator**: Three-screen navigation (Today, Add Habit, History)
+- **React Navigation**: Industry-standard navigation library
+
+### Data Persistence
+- **SQLite Database**: Local storage using `expo-sqlite`
+- **Automatic Migration**: Database schema updates handled automatically
+- **Error Recovery**: Automatic database reinitialization on connection errors
+- **Web Compatibility**: localStorage adapter for web platform
+
+### UI Components
+- **Time Picker**: Native time picker for completion and planned times
+- **Duration Input**: Hours and minutes input with validation
+- **Error Boundary**: Graceful error handling with fallback UI
+- **Modal Dialogs**: Professional modals for habit completion and time editing
+
+### Code Quality
+- **TypeScript**: Full type safety
+- **Error Handling**: Comprehensive error handling and recovery
+- **Code Organization**: Clean separation of concerns (database, services, screens, components)
+
+## 📊 Database Schema
+
+### Habits Table
+Stores habit definitions and metadata.
+
+```sql
+CREATE TABLE habits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  createdAt TEXT NOT NULL,           -- ISO date string
+  deletedAt TEXT,                    -- ISO date string, null if active
+  scheduledTime TEXT,                -- HH:MM format (24-hour), e.g., "06:00"
+  isCritical INTEGER DEFAULT 0       -- 1 if critical, 0 if not
+);
+```
+
+**Fields:**
+- `id`: Unique identifier
+- `name`: Habit name (e.g., "Exercise", "Read")
+- `createdAt`: When the habit was created (ISO timestamp)
+- `deletedAt`: When the habit was deleted (ISO timestamp, null if active)
+- `scheduledTime`: Planned time in 24-hour format (e.g., "06:00" for 6 AM)
+- `isCritical`: Boolean flag (0 = false, 1 = true) for priority habits
+
+### Habit Records Table
+Stores daily status and completion data for each habit.
+
+```sql
+CREATE TABLE habit_records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  habitId INTEGER NOT NULL,
+  date TEXT NOT NULL,                -- YYYY-MM-DD format
+  status TEXT NOT NULL DEFAULT 'pending',  -- 'pending' or 'done'
+  durationMinutes INTEGER,           -- Total minutes (null if not logged)
+  completionTime TEXT,               -- HH:MM format (24-hour)
+  FOREIGN KEY (habitId) REFERENCES habits(id),
+  UNIQUE(habitId, date)
+);
+```
+
+**Fields:**
+- `id`: Unique identifier
+- `habitId`: Foreign key to habits table
+- `date`: Date in YYYY-MM-DD format (e.g., "2025-12-30")
+- `status`: Either 'pending' or 'done'
+- `durationMinutes`: Total duration in minutes (e.g., 90 for 1 hour 30 minutes)
+- `completionTime`: Time when habit was completed in HH:MM format (e.g., "14:30")
+
+**Constraints:**
+- Unique constraint on `(habitId, date)` ensures one record per habit per day
+- Foreign key ensures referential integrity
+
+### Indexes
+```sql
+CREATE INDEX idx_habit_records_date ON habit_records(date);
+CREATE INDEX idx_habit_records_habitId ON habit_records(habitId);
+```
+
+These indexes improve query performance when filtering by date or habit.
+
+## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js (>= 18)
@@ -56,173 +142,94 @@ MyHabit is a simple, clean habit tracking app where:
 
    Alternatively, you can press `a` in the terminal to open on Android emulator (if configured).
 
-### Development
+### Building APK
 
-Start the Expo development server:
+To create an APK for distribution:
+
+1. **Install EAS CLI:**
+   ```bash
+   npm install -g eas-cli
+   ```
+
+2. **Login to Expo:**
+   ```bash
+   eas login
+   ```
+
+3. **Configure EAS Build:**
+   ```bash
+   eas build:configure
+   ```
+
+4. **Build APK:**
+   ```bash
+   eas build --platform android --profile preview
+   ```
+
+For production builds:
 ```bash
-npm start
+eas build --platform android --profile production
 ```
 
-This will:
-- Start the Metro bundler
-- Display a QR code for Expo Go
-- Open the Expo DevTools in your browser
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 MyHabit/
 ├── src/
+│   ├── components/
+│   │   ├── DurationInput.tsx      # Duration input (hours/minutes)
+│   │   ├── ErrorBoundary.tsx      # Error boundary component
+│   │   └── TimePicker.tsx         # Time picker component
 │   ├── database/
-│   │   └── database.ts          # SQLite database layer (expo-sqlite)
+│   │   ├── database.ts             # SQLite database layer (expo-sqlite)
+│   │   └── webStorage.ts          # Web storage adapter (localStorage)
 │   ├── navigation/
-│   │   └── AppNavigator.tsx     # Navigation setup
+│   │   └── AppNavigator.tsx       # Navigation setup
 │   ├── screens/
-│   │   ├── TodayScreen.tsx      # Main today's habits screen
-│   │   ├── AddHabitScreen.tsx   # Create new habit screen
-│   │   └── HistoryScreen.tsx    # View past days (read-only)
+│   │   ├── TodayScreen.tsx         # Main today's habits screen
+│   │   ├── AddHabitScreen.tsx     # Create new habit screen
+│   │   └── HistoryScreen.tsx      # View past days (read-only)
 │   ├── services/
-│   │   └── habitService.ts      # Business logic for habits
+│   │   └── habitService.ts        # Business logic for habits
 │   └── types/
-│       └── index.ts              # TypeScript type definitions
-├── App.tsx                       # Root component
-├── index.js                      # Expo entry point
-├── app.json                      # Expo configuration
+│       └── index.ts               # TypeScript type definitions
+├── App.tsx                         # Root component
+├── index.js                        # Expo entry point
+├── app.json                        # Expo configuration
 └── package.json
 ```
 
-## Architecture
-
-### Data Layer
-
-**Database (Expo SQLite)**
-- Uses `expo-sqlite` for local database storage (Expo Go compatible)
-- `habits` table: Stores habit definitions with creation and deletion timestamps
-- `habit_records` table: Stores daily status and time logs for each habit
-
-**Key Design Decisions:**
-- Habits are soft-deleted (using `deletedAt` timestamp) to preserve history
-- Daily records are created on-demand when viewing a date
-- Unique constraint on `(habitId, date)` ensures one record per habit per day
-
-### Service Layer
-
-**HabitService** (`src/services/habitService.ts`)
-- Handles all business logic for habits
-- Manages habit creation, status updates, and deletion
-- Ensures daily records exist when needed
-
-### Screen Components
-
-**TodayScreen** (`src/screens/TodayScreen.tsx`)
-- Displays today's date and habit list
-- Allows marking habits as done/pending with time logging
-- Handles habit deletion (today context only)
-- Navigation to Add Habit and History screens
-
-**AddHabitScreen** (`src/screens/AddHabitScreen.tsx`)
-- Simple form to create new habits
-- Creates habit and initializes today's record
-
-**HistoryScreen** (`src/screens/HistoryScreen.tsx`)
-- Date navigation (Previous/Next buttons)
-- Read-only view of past days' habits
-- Shows status and time logs for historical records
-
-### Navigation
-
-Uses React Navigation Stack Navigator with three screens:
-- Today (default)
-- Add Habit
-- History
-
-## Main Logic Locations
-
-### Habit Management
-- **Service**: `src/services/habitService.ts`
-- **Database Operations**: `src/database/database.ts`
-- **Today Screen Logic**: `src/screens/TodayScreen.tsx`
-
-### Data Persistence
-- **Database Initialization**: `src/database/database.ts` → `init()`
-- **Table Creation**: `src/database/database.ts` → `createTables()`
-- **Record Management**: `src/database/database.ts` → `ensureHabitRecordsForDate()`
-
-### Time Logging
-- **UI**: `src/screens/TodayScreen.tsx` → Modal with duration input
-- **Storage**: `src/database/database.ts` → `updateHabitRecord()`
-
-### Deletion Logic
-- **Implementation**: `src/database/database.ts` → `deleteHabit()`
-- **UI**: `src/screens/TodayScreen.tsx` → `handleDelete()`
-- **History Preservation**: Soft delete with `deletedAt` timestamp ensures past records remain visible
-
-## Data Models
-
-### Habit
-```typescript
-{
-  id: number;
-  name: string;
-  createdAt: string;      // ISO date string
-  deletedAt: string | null; // ISO date string, null if active
-}
-```
-
-### HabitRecord
-```typescript
-{
-  id: number;
-  habitId: number;
-  date: string;           // YYYY-MM-DD format
-  status: 'pending' | 'done';
-  durationMinutes: number | null;
-}
-```
-
-## Edge Cases Handled
-
-1. **Habit Deletion**: Deleted habits don't appear in future days but remain in history
-2. **Missing Records**: History automatically creates pending records for habits that existed on a date but weren't explicitly marked
-3. **Future Dates**: History screen prevents navigation to future dates
-4. **Invalid Time Input**: Validates numeric input for duration logging
-
-## Dependencies
+## 🔧 Dependencies
 
 ### Core
-- `expo`: ~50.0.0 (Expo SDK 50)
-- `react-native`: 0.73.0
-- `react`: 18.2.0
-- `typescript`: ^5.3.3
+- `expo`: ~54.0.0 (Expo SDK 54)
+- `react-native`: ^0.81.5
+- `react`: 19.1.0
+- `typescript`: ^5.6.3
 
 ### Navigation
-- `@react-navigation/native`: ^6.1.9
-- `@react-navigation/stack`: ^6.3.20
-- `react-native-screens`: ~3.29.0
-- `react-native-safe-area-context`: 4.8.2
-- `react-native-gesture-handler`: ~2.14.0
+- `@react-navigation/native`: ^6.1.18
+- `@react-navigation/stack`: ^6.4.1
+- `react-native-screens`: ~4.16.0
+- `react-native-safe-area-context`: ~5.6.0
+- `react-native-gesture-handler`: ~2.28.0
 
 ### Storage
-- `expo-sqlite`: ~13.0.0 (Expo-compatible SQLite)
+- `expo-sqlite`: ~16.0.10 (Expo-compatible SQLite)
 
-## Expo Go Compatibility
+### UI Components
+- `@react-native-community/datetimepicker`: ^8.4.4 (Time picker)
 
-This app is fully compatible with Expo Go and uses only Expo-compatible libraries:
-- ✅ `expo-sqlite` for database (no native modules)
-- ✅ React Navigation (works with Expo Go)
-- ✅ All dependencies are Expo Go compatible
-
-**Note**: The app uses Expo's managed workflow, meaning no native code compilation is required. You can test it directly with Expo Go on your Android device.
-
-## Notes
+## 📝 Notes
 
 - The app uses local SQLite storage only (no cloud sync)
 - All data persists across app restarts
 - History is immutable - past records cannot be edited or deleted
 - Habits are automatically created for each day when viewing that date
-- Built with Expo SDK 50 for maximum compatibility with Expo Go
+- Critical habits remain visually indicated even after completion
+- Built with Expo SDK 54 for maximum compatibility with Expo Go
 
-## Troubleshooting
+## 🐛 Troubleshooting
 
 ### Expo Go Connection Issues
 - Ensure your device and computer are on the same Wi-Fi network
@@ -232,7 +239,8 @@ This app is fully compatible with Expo Go and uses only Expo-compatible librarie
 ### Database Issues
 - The database is created automatically on first launch
 - If you encounter database errors, try clearing the Expo Go app data and restarting
+- The app includes automatic database reinitialization on connection errors
 
-## License
+## 📄 License
 
 See LICENSE file for details.
