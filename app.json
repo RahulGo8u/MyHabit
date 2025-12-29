@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "MyHabit",
+    "slug": "myhabit",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#2196f3",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.myhabit.app"
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
+  }
+}
