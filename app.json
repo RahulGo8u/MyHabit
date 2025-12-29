@@ -16,10 +16,16 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.myhabit.app"
+      "package": "com.myhabit.app",
+      "versionCode": 1
     },
     "plugins": [
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9920fbdb-6288-41a4-808d-f87206e1d622"
+      }
+    }
   }
 }

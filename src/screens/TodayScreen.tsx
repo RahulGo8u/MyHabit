@@ -9,6 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {habitService} from '../services/habitService';
 import {HabitWithStatus} from '../types';
 import TimePicker from '../components/TimePicker';
@@ -19,6 +20,7 @@ interface TodayScreenProps {
 }
 
 const TodayScreen: React.FC<TodayScreenProps> = ({navigation}) => {
+  const insets = useSafeAreaInsets();
   const [habits, setHabits] = useState<HabitWithStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -283,7 +285,7 @@ const TodayScreen: React.FC<TodayScreenProps> = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, {paddingTop: Math.max(insets.top, 20)}]}>
         <View style={styles.headerContent}>
           <View>
             <Text style={styles.title}>Today</Text>
@@ -547,6 +549,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#333',
+  },
+  completionInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  completionTimeText: {
+    fontSize: 14,
+    color: '#2196f3',
+    fontWeight: '500',
   },
   durationText: {
     fontSize: 14,

@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {habitService} from '../services/habitService';
 import {HabitWithStatus} from '../types';
 import {database} from '../database/database';
@@ -17,6 +18,7 @@ interface HistoryScreenProps {
 }
 
 const HistoryScreen: React.FC<HistoryScreenProps> = ({navigation}) => {
+  const insets = useSafeAreaInsets();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [habits, setHabits] = useState<HabitWithStatus[]>([]);
   const [loading, setLoading] = useState(false);
@@ -149,7 +151,7 @@ const HistoryScreen: React.FC<HistoryScreenProps> = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, {paddingTop: Math.max(insets.top, 20)}]}>
         <View style={styles.headerContent}>
           <View>
             <Text style={styles.title}>History</Text>
